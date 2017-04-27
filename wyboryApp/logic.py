@@ -3,6 +3,7 @@ from django.db import IntegrityError
 
 from .models import *
 
+
 def get_stats(obwody):
     uprawnieni = obwody.aggregate(Sum("uprawnieni"))["uprawnieni__sum"]
     wydane = obwody.aggregate(Sum("wydane"))["wydane__sum"]
@@ -29,14 +30,22 @@ def get_stats(obwody):
         "obwody": [x.id for x in obwody]
     }
 
+
 def get_candidates(stats):
-    kk = list(map(lambda k: {"nazwa":k, "glosy": k.wynik_set.filter(obwod__id__in=stats["obwody"]).aggregate(Sum('glosy'))["glosy__sum"], "id":k.id}, Kandydat.objects.all()))
+    kk = list(map(lambda k:
+                  {"nazwa": k,
+                   "glosy": k.wynik_set.filter(obwod__id__in=stats["obwody"])
+                            .aggregate(Sum('glosy'))["glosy__sum"],
+                   "id": k.id},
+                  Kandydat.objects.all()))
     for k in kk:
         k["procent"] = round(k["glosy"] / stats["oddane"] * 100, 2)
     return kk
 
+
 def integrity_check(wynik):
     obwod = wynik.obwod
-    wazne = Wynik.objects.select_for_update().filter(obwod__id=obwod.id).aggregate(Sum("glosy"))["glosy__sum"]
+    wazne = Wynik.objects.select_for_update().filter(
+        obwod__id=obwod.id).aggregate(Sum("glosy"))["glosy__sum"]
     if wazne + obwod.niewazne > obwod.wydane:
         raise IntegrityError()
