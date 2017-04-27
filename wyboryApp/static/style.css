@@ -1,0 +1,164 @@
+/* General */
+
+.margin-auto {
+    margin: 0 auto;
+}
+
+.shrinkwrap {
+    display: inline-block;
+}
+
+.center-text {
+    text-align: center;
+}
+
+.flex-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.flex-left {
+    justify-content: flex-start;
+}
+
+.flex-between {
+    justify-content: space-between;
+}
+
+@media screen and (max-width: 860px) {
+    .reverse-when-small {
+        flex-direction: column-reverse;
+    }
+
+    .flex-small-right {
+        flex-direction: row-reverse;
+    }
+}
+
+/* Columns */
+.col-3 {
+    width: 33%;
+}
+
+.col-2 {
+    width: 50%;
+}
+
+@media screen and (max-width: 768px) {
+    .col-3 {
+        width: 50%;
+    }
+    .col-2 {
+        width: 80%;
+    }
+}
+
+/* Text */
+h3 {
+    text-align: center;
+}
+
+/* Tables */
+table.statystyki td:nth-child(2) {
+    text-align: right;
+    padding-left: 5px;
+}
+
+table.statystyki td:nth-child(1) {
+    padding-right: 5px;
+}
+
+td ~ td {
+    text-align: right
+}
+
+tr:nth-child(even) {
+    background-color: #f0f0f0
+}
+tr:hover {
+    background-color: #ff6405
+}
+
+thead tr:hover {
+    background-color: inherit;
+}
+
+table {
+    border-collapse:collapse;
+}
+
+/* Map */
+svg g {
+    cursor:pointer;
+    transform: scale(.75);
+}
+
+svg#mapa_svg {
+    width: 400px;
+    height: 400px;
+}
+
+svg path {
+    fill: #35cc35;
+    stroke: whitesmoke;
+    stroke-width: 0.2%;
+    stroke-linejoin: bevel;
+}
+
+svg path:hover {
+    fill: #55dc35;
+    stroke-width: 0.25%;
+}
+
+/* Other */
+.horizontal-space div {
+    margin: 4px 0;
+}
+
+.votebar-wrapper {
+    width: 60%;
+    background-color: #dfdfdf;
+}
+
+.votebar {
+    background-color: gray;
+}
+
+.votebar::after {
+    content: '\00a0 '
+}
+
+@media screen and (max-width: 768px) {
+        .votebar-wrapper {
+            display: none;
+        }
+}
+
+.bg-red {
+    background-color: red;
+}
+
+.bg-blue {
+    background-color: blue;
+}
+
+body > header {
+    background-color: indianred;
+    color: white;
+    border-radius: 5px;
+}
+
+a {
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+body {
+    background-color: #fffaf5;
+    padding-bottom: 35px;
+}

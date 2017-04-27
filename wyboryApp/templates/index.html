@@ -1,0 +1,45 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Wybory Prezydenta Rzeczypospolitej Polskiej 2000">
+    <title>Wybory Prezydenta Rzeczypospolitej Polskiej 2000</title>
+
+    <link rel="stylesheet" type="text/css" href="{% static "style.css" %}">
+</head>
+
+<body>
+    <header class="center-text">
+        <div class="shrinkwrap">
+            <h1>Wybory Prezydenta Rzeczypospolitej Polskiej 2000</h1>
+        </div>
+        <div>
+            {% if auth == True %}
+                <a href="/logout">Logout</a>
+            {% else %}
+                <a href="/login">Login</a>
+            {% endif %}
+            <form method="get" action="/search">
+                <input type="text" name="q">
+                <input type="submit" value="Szukaj">
+            </form>
+    </header>
+
+    <main>
+        {% block content %}
+        <div class="flex-wrapper">
+            {% include 'map.html' %}
+            {% include 'statistics.html' %}
+        </div>
+
+        <div class="flex-wrapper">
+        {% include 'results.html' %}
+        </div>
+        {% endblock %}
+    </main>
+</body>
+
+</html>

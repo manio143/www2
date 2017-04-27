@@ -1,0 +1,22 @@
+<html>
+    <head><title>Edytuj</title></head>
+    <body>
+        {% if error %}<p style="color: red;">{{error}}</p>{% endif %}
+        {% if success %}<p style="color: green;">{{success}}</p>{% endif %}
+        <p>Wynik kandydata {{nazwa}} w obwodzie nr {{obwod}}</p>       
+        <form action="{{currUrl}}?return={{back}}" method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="fieldWrapper">
+                    {{ field.errors }}
+                    {{ field.label_tag }} {{ field }}
+                    {% if field.help_text %}
+                    <p class="help">{{ field.help_text|safe }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <input type="submit" value="Submit" />
+            {% if back %}<a href="{{back}}"><input type="button" value="Back" /></a>{% endif %}
+        </form>
+    </body>
+</html>

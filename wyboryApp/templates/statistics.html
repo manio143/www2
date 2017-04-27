@@ -1,0 +1,31 @@
+            <section>
+                <div>
+                    <h3>Zbiorcze statystyki głosowania</h3>
+                    <table class="statystyki">
+                        <tr>
+                            <td>Liczba uprawnionych do głosowania</td>
+                            <td>{{ stats.uprawnieni }}</td>
+                        </tr>
+                        <tr>
+                            <td>Liczba kart wydanych</td>
+                            <td>{{ stats.wydane }}</td>
+                        </tr>
+                        <tr>
+                            <td>Liczba głosów oddanych</td>
+                            <td>{{ stats.oddane }}</td>
+                        </tr>
+                        <tr>
+                            <td>Liczba głosów ważnych</td>
+                            <td>{{ stats.wazne }}</td>
+                        </tr>
+                        <tr>
+                            <td>Liczba głosów nieważnych</td>
+                            <td>{{ stats.niewazne }}</td>
+                        </tr>
+                        <tr>
+                            <td>Frekwencja</td>
+                            <td>{{ stats.frekwencja }}%</td>
+                        </tr>
+                    </table>
+                </div>
+            </section>

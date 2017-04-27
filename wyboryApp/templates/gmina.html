@@ -1,0 +1,14 @@
+{% extends 'index.html' %}
+{% block content %}
+    <div class="flex-wrapper">
+        {% include 'results.html' %}
+        {% include 'statistics.html' %}
+    </div>
+    <div class="flex-wrapper">
+    {% for obwód in more.details %}
+        {% with kandydaci=obwód.kandydaci editId=obwód.id place=obwód.miejsce %}
+        {% include 'results.html' %}
+        {% endwith %}
+    {% endfor %}
+    </div>
+{% endblock %}

@@ -1,0 +1,10 @@
+<html>
+    <body>
+    <h2>Wyniki</h2>
+    <ul>
+        {% for gmina in gminy %}
+            <li><a href="/gmina/{{gmina.nazwa}}-{{gmina.id}}">{{gmina.nazwa}}</a></li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
