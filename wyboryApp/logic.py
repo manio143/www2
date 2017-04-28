@@ -11,7 +11,8 @@ def get_stats(obwody):
     niewazne = obwody.aggregate(Sum("niewazne"))["niewazne__sum"]
 
     for o in obwody:
-        wazne += o.wynik_set.aggregate(Sum("glosy"))["glosy__sum"]
+        glosy = o.wynik_set.aggregate(Sum("glosy"))["glosy__sum"]
+        wazne += glosy if glosy != None else 0
 
     oddane = wazne + niewazne
 
@@ -32,10 +33,15 @@ def get_stats(obwody):
 
 
 def get_candidates(stats):
+    def accumulate(wynik_set, id_list):
+        out = 0
+        while id_list:
+            out+=wynik_set.filter(obwod__id__in=id_list[:10]).aggregate(Sum('glosy'))["glosy__sum"]
+            id_list = id_list[10:]
+
     kk = list(map(lambda k:
                   {"nazwa": k,
-                   "glosy": k.wynik_set.filter(obwod__id__in=stats["obwody"])
-                            .aggregate(Sum('glosy'))["glosy__sum"],
+                   "glosy": accumulate(k.wynik_set, stats["obwody"]),
                    "id": k.id},
                   Kandydat.objects.all()))
     for k in kk:
