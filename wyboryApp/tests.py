@@ -41,3 +41,23 @@ class LogicTestCase(TestCase):
         wynik.save()
         with self.assertRaises(IntegrityError):
             integrity_check(wynik)
+
+    def test_get_candidates(self):
+        gmina = Gmina.objects.create(nazwa="g")
+        okreg = Okreg.objects.create(numer=1)
+        obw1 = Obwod.objects.create(gmina=gmina, okreg=okreg,
+               uprawnieni=10, wydane=10, niewazne=1)
+        obw2 = Obwod.objects.create(gmina=gmina, okreg=okreg,
+               uprawnieni=2, wydane=2, niewazne=0)
+        cand = Kandydat.objects.create(imie="Jan", nazwisko="Nowak")
+        wynik1 = Wynik.objects.create(kandydat=cand, obwod=obw1, glosy=9)
+        wynik2 = Wynik.objects.create(kandydat=cand, obwod=obw2, glosy=2)
+
+
+        stats = get_stats(Obwod.objects.filter(id__in=[obw1.id, obw2.id]))
+        candidates = get_candidates(stats)
+
+
+        self.assertEqual(11, candidates[0]["glosy"])
+        self.assertEqual(cand.__str__(), candidates[0]["nazwa"].__str__())
+        self.assertEqual(cand.id, candidates[0]["id"])
