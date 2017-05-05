@@ -36,8 +36,8 @@ def get_candidates(stats):
     def accumulate(wynik_set, id_list):
         out = 0
         while id_list:
-            out+=wynik_set.filter(obwod__id__in=id_list[:1000]).aggregate(Sum('glosy'))["glosy__sum"]
-            id_list = id_list[1000:]
+            out+=wynik_set.filter(obwod__id__in=id_list[:200]).aggregate(Sum('glosy'))["glosy__sum"]
+            id_list = id_list[200:]
         return out
 
     kk = list(map(lambda k:
@@ -51,8 +51,8 @@ def get_candidates(stats):
 
 
 def integrity_check(wynik):
-    obwod = wynik.obwod
-    wazne = Wynik.objects.select_for_update().filter(
+    obwod = Obwod.objects.select_for_update().get(id=wynik.obwod.id)
+    wazne = Wynik.objects.filter(
         obwod__id=obwod.id).aggregate(Sum("glosy"))["glosy__sum"]
     if wazne + obwod.niewazne > obwod.wydane:
         raise IntegrityError()

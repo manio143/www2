@@ -65,8 +65,7 @@ def user_login(request):
     elif request.method == "POST":
         form = LoginForm(request.POST)
         form.is_valid()
-        user = authenticate(
-            request, username=form.cleaned_data["user"], password=form.cleaned_data["password"])
+        user = authenticate(username=form.cleaned_data["user"], password=form.cleaned_data["password"])
         if user is None:
             return render(request, "login.html",
                           {"error": "Invalid login or password.", "form": LoginForm()})
@@ -138,6 +137,7 @@ def gmina(request, nazwa, id):
 
 class EditForm(forms.Form):
     oddane = forms.IntegerField()
+    #TODO: validate greater than 0
 
 
 def edit_view(request, obwod_id, candidate_id):
@@ -150,7 +150,7 @@ def edit_view(request, obwod_id, candidate_id):
 
     if request.method == "POST":
         form = EditForm(request.POST)
-        form.is_valid()
+        form.is_valid() #TODO: if not set error and return
         oddane = form.cleaned_data["oddane"]
         try:
             with transaction.atomic():
