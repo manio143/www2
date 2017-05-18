@@ -6,9 +6,12 @@ from .models import *
 
 def get_stats(obwody):
     uprawnieni = obwody.aggregate(Sum("uprawnieni"))["uprawnieni__sum"]
+    uprawnieni = uprawnieni if uprawnieni != None else 0
     wydane = obwody.aggregate(Sum("wydane"))["wydane__sum"]
+    wydane = wydane if wydane != None else 0
     wazne = 0
     niewazne = obwody.aggregate(Sum("niewazne"))["niewazne__sum"]
+    niewazne = niewazne if niewazne != None else 0
 
     for o in obwody:
         glosy = o.wynik_set.aggregate(Sum("glosy"))["glosy__sum"]
@@ -46,7 +49,10 @@ def get_candidates(stats):
                    "id": k.id},
                   Kandydat.objects.all()))
     for k in kk:
-        k["procent"] = round(k["glosy"] / stats["oddane"] * 100, 2)
+        if stats["oddane"] != 0:
+            k["procent"] = round(k["glosy"] / stats["oddane"] * 100, 2)
+        else:
+            k["procent"] = 0
     return kk
 
 

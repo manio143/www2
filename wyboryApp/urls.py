@@ -7,6 +7,7 @@ urls = [
     url(r'^$', views.main_page),
     url(r'^login', views.user_login),
     url(r'^logout', views.user_logout),
+    url(r'^index', views.index),
     url(r'^woj/(?P<name>.+)', views.woj),
     url(r'^okr/(?P<num>[0-9]+)', views.okr),
     url(r'^gmina/(?P<nazwa>.+?)-(?P<id>[0-9]+)', views.gmina),

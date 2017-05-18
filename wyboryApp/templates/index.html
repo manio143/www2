@@ -22,10 +22,12 @@
             {% else %}
                 <a href="/login">Login</a>
             {% endif %}
-            <form method="get" action="/search">
+            <a href="#" id="search_btn">Search</a>
+            <!--<form method="get" action="/search">
                 <input type="text" name="q">
                 <input type="submit" value="Szukaj">
-            </form>
+            </form>-->
+        </div>
     </header>
 
     <main>
@@ -33,13 +35,24 @@
         <div class="flex-wrapper">
             {% include 'map.html' %}
             {% include 'statistics.html' %}
+            {% include 'results.html' %}
         </div>
 
-        <div class="flex-wrapper">
-        {% include 'results.html' %}
+        <div id="results-wrapper" class="flex-wrapper">
         </div>
+        <section id="more-wrapper" style="display: none">
+            <h3>Wyniki szczegółowe</h3>
+            <div id="more" class="flex-wrapper flex-left horizontal-space margin-auto col-2">
+                {% for r in more.links %}
+                <div class="col-3">
+                    <a href="{{ r.url }}">{{ r.nazwa }}</a>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
         {% endblock %}
     </main>
+    <script src="{% static "site.js" %}"></script>    
 </body>
 
 </html>

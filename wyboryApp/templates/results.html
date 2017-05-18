@@ -1,16 +1,16 @@
-            <section class="shrinkwrap">
-                <h3>Wyniki wyborów{% if place %} {{place}}{% endif %}</h3>
+            <section id="mainResult" class="shrinkwrap">
+                <h3>Wyniki wyborów</h3>
                 <table>
                     <thead>
                         <tr>
                             <th>Imię i nazwisko</th>
                             <th>Liczba oddanych głosów</th>
                             <th>Wynik wyborczy (%)</th>
-                {% if auth %}<th>Edycja</th>{% endif %}
+              <!--  {% if auth %}<th>Edycja</th>{% endif %} -->
                         </tr>
                     </thead>
                     <tbody>
-                        {% for kandydat in kandydaci %}
+                        {% for kandydat in mainResult %}
                         <tr>
                             <td>{{ kandydat.nazwa }}</td>
                             <td>{{ kandydat.glosy }}</td>
@@ -18,12 +18,12 @@
                             <td>
                                 <div class="flex-wrapper flex-between flex-small-right">
                                     <div class="votebar-wrapper">
-                                        <div class="votebar {% if kandydat.glosy == 0 %}bg-red{% elif kandydat.glosy == 1 %}bg-blue{% endif %}" style="width:{{ kandydat.procent }}%;"></div>
+                                        <div class="votebar" style="width:{{ kandydat.procent }}%;"></div>
                                     </div>
                                     <span>{{ kandydat.procent }}%</span>
                                 </div>
                             </td>
-                {% if auth %}{% if editId %}<td><a href="/edit/{{editId}}/{{kandydat.id}}?return={{currUrl}}">Edytuj</a></td>{% endif %}{% endif %}
+                <!--{% if auth %}{% if editId %}<td><a href="/edit/{{editId}}/{{kandydat.id}}?return={{currUrl}}">Edytuj</a></td>{% endif %}{% endif %} -->
                             
                         </tr>
                         {% endfor %}

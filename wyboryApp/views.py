@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views import View
 from django.db.models import Sum
 from django.views.generic import ListView
@@ -9,6 +9,24 @@ from django.db import transaction, IntegrityError
 
 from . import models
 from .logic import get_stats, get_candidates, integrity_check
+
+from django.db.models import Model
+from django.db.models.query import QuerySet
+from django.forms import model_to_dict
+
+def good_to_go(o):
+    if hasattr(o, 'to_dict'):
+        return o.to_dict()
+    elif issubclass(o.__class__, Model):
+        if hasattr(o, '__str__'):
+            return o.__str__()
+        return model_to_dict(o)
+    elif issubclass(o.__class__, QuerySet) or isinstance(o, list):
+        return [good_to_go(m) for m in o]
+    elif isinstance(o, dict):
+        return {k: good_to_go(v) for k, v in o.items()}
+    else:
+        return o
 
 WOJEWODZTWO_OKREGI = {
     "dolnośląskie": (1, 2, 3, 4),
@@ -78,33 +96,40 @@ def user_logout(request):
     logout(request)
     return HttpResponseRedirect("/")
 
-
-def view(request, data, template, more=None):
+def context(request, data, more):
     stats = get_stats(data)
 
     kandydaci = get_candidates(stats)
 
-    context = {
-        "auth": request.user.is_authenticated,
+    return {
+        "auth": True if request.user.is_authenticated else False,
         "stats": stats,
-        "kandydaci": kandydaci,
+        "mainResult": kandydaci,
         "more": more,
         "currUrl": request.path,
     }
+def view(request, data, template, more=None):
+    _context = context(request, data, more)
 
-    return render(request, template, context)
+    return render(request, template, _context)
 
+def json(request, data, type, more=None):
+    _context = good_to_go(context(request, data, more))
+    _context["type"] = type
+    return JsonResponse(_context, safe=False)
 
 def main_page(request):
-    return view(request, models.Obwod.objects.all(), "index.html")
+    return view(request, models.Obwod.objects.filter(id__lt=0), "index.html")
 
+def index(request):
+    return json(request, models.Obwod.objects.all(), "main")
 
 def woj(request, name):
     okregi = list(WOJEWODZTWO_OKREGI[name])
     data = models.Obwod.objects.filter(okreg__numer__in=okregi)
     if not list(data):
         return HttpResponseRedirect("/")
-    return view(request, data, "details.html",
+    return json(request, data, "details",
                 {"links":
                  [{"url": "/okr/{}".format(x), "nazwa": "Okręg Nr {}".format(x)}
                   for x in okregi]
@@ -115,22 +140,19 @@ def okr(request, num):
     data = models.Obwod.objects.filter(okreg__numer__in=[num])
     if not list(data):
         return HttpResponseRedirect("/")
-    return view(request, data, "details.html",
+    return json(request, data, "details",
                 {"links":
                  [{"url": "/gmina/{}-{}".format(x.nazwa, x.id), "nazwa": "{}".format(
                      x.nazwa)} for x in models.Okreg.objects.get(numer=num).gmina_set.distinct()]
                 })
 
-# TODO: /edit/{id} - edytujemy obwód o podanym id (musimy być @authenticated)
-
-
 def gmina(request, nazwa, id):
     data = models.Obwod.objects.filter(gmina__id=id)
     if not list(data):
         return HttpResponseRedirect("/")
-    return view(request, data, "gmina.html",
-                {"details":
-                 [{"id": x.id, "kandydaci": get_candidates(get_stats(data.filter(
+    return json(request, data, "gmina",
+                {"results":
+                 [{"id": x.id, "result": get_candidates(get_stats(data.filter(
                      id=x.id))), "miejsce": "w obwodzie nr {}".format(x.id)} for x in data]
                 })
 

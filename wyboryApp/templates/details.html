@@ -4,9 +4,9 @@
         {% include 'results.html' %}
         {% include 'statistics.html' %}
     </div>
-    <section>
+    <section id="more-wrapper">
         <h3>Wyniki szczegółowe</h3>
-        <div class="flex-wrapper flex-left horizontal-space margin-auto col-2">
+        <div id="more" class="flex-wrapper flex-left horizontal-space margin-auto col-2">
             {% for r in more.links %}
             <div class="col-3">
                 <a href="{{ r.url }}">{{ r.nazwa }}</a>
