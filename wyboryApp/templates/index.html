@@ -18,9 +18,9 @@
         </div>
         <div>
             {% if auth == True %}
-                <a href="/logout">Logout</a>
+                <a href="#" id="logout">Logout</a>
             {% else %}
-                <a href="/login">Login</a>
+                <a href="#" id="login">Login</a>
             {% endif %}
             <a href="#" id="search_btn">Search</a>
             <!--<form method="get" action="/search">
@@ -52,6 +52,16 @@
         </section>
         {% endblock %}
     </main>
+    <div class="dimmer" id="popup-wrapper">
+        <div class="popup" id="popup">
+            <div id="popup-login">
+                
+            </div>
+            <div id="popup-search">
+                
+            </div>
+        </div>
+    </div>
     <script src="{% static "site.js" %}"></script>    
 </body>
 

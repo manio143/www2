@@ -1,8 +1,5 @@
-<html>
-    <head><title>Login</title></head>
-    <body>
         {% if error %}<p style="color: red;">{{error}}</p>{% endif %}
-        <form action="/login" method="post">
+        <form action="/login" method="post" id="form-login">
             {% csrf_token %}
             {% for field in form %}
                 <div class="fieldWrapper">
@@ -13,7 +10,5 @@
                     {% endif %}
                 </div>
             {% endfor %}
-            <input type="submit" value="Login" />
+            <input type="submit" value="Login" id="submit-login" />
         </form>
-    </body>
-</html>

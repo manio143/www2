@@ -12,10 +12,12 @@ function parse_cookies() {
     return cookies;
 }
 
-function send(method, uri, content, onSuccess, onError) {
+function send(method, uri, content, onSuccess, onError, setUp) {
     var req = new XMLHttpRequest();
     req.open(method, uri, true);
 
+    if(setUp != undefined)
+        setUp(req);
     req.onreadystatechange = function () {
         if (req.readyState !== 4) return;
         if (req.status >= 200 && req.status < 300) {
@@ -46,7 +48,7 @@ function displaySearchBox() {
 }
 
 function setVisibility(id, visible) {
-    document.getElementById(id).style.display = visible?"inherit":"none";
+    document.getElementById(id).style.display = visible ? "inherit" : "none";
 }
 
 function setStats(stats) {
@@ -99,12 +101,12 @@ function setResults(results) {
 function setMore(links) {
     var more = document.getElementById("more");
     for (child of more.children)
-        child.remove();
+        more.removeChild(child);
     for (let i = 0; i < links.length; i++) {
-        let div =  document.createElement('div');
+        let div = document.createElement('div');
         div.classList.add("col-3");
 
-        let a =  document.createElement('a');
+        let a = document.createElement('a');
         a.href = links[i].url;
         a.innerHTML = links[i].nazwa;
 
@@ -115,8 +117,11 @@ function setMore(links) {
 
 function deleteResults() {
     var results = document.getElementsByName("results");
-    for (result of results)
-        result.remove();
+    if (results.length > 0) {
+        var parent = results[0].parentElement;
+        for (result of results)
+            parent.removeChild(result);
+    }
 }
 
 function buildFromData(data) {
@@ -137,6 +142,10 @@ function buildFromData(data) {
     }
 }
 
+function onError(status, resp) {
+    alert("Request returned " + status + "\n" + resp);
+}
+
 function makeRedirect(href) {
     return () => {
         function processResponse(status, response) {
@@ -153,24 +162,54 @@ function makeRedirect(href) {
 
             setAnchors();
         }
-        function onError(status, resp) {
-            alert("Request returned " + status + "\n" + resp);
-        }
+
         send("GET", href, {}, processResponse, onError);
 
         return false;
     }
 }
 
+function popupLogin() {
+    let req = send("GET", "/login", {}, (status, view) => {
+        setVisibility("popup-wrapper", true);
+        setVisibility("popup-login", true);
+        setVisibility("popup-search", false);
+
+        let popupLogin = document.getElementById("popup-login");
+        popupLogin.innerHTML = view;
+
+        let form = document.getElementById("form-login");
+        form.submit = (e) => {            
+            var params = new FormData(form)
+            var csrf = form.elements.csrfmiddlewaretoken.value;
+            send("POST", "/login", params, () => {
+                var login = document.getElementById("login");
+                login.setAttribute("id", "login");
+                login.innerText = "Logout";
+                setAuthLinks();
+                resetContent();
+            }, onError, (req) => {
+                req.setRequestHeader("Content-type", "application/json");
+                req.setRequestHeader("X-Csrf-Token", csrf);
+            });
+
+            return false;
+        }
+
+        return false;
+    }, onError);
+}
+
 function setAnchors() {
     var anchors = document.getElementsByTagName("a");
     for (anchor of anchors) {
-        if(anchor.getAttributeNS('http://www.w3.org/1999/xlink', 'href'))
+        if (anchor.getAttributeNS('http://www.w3.org/1999/xlink', 'href'))
             anchor.onclick = makeRedirect(anchor.getAttributeNS('http://www.w3.org/1999/xlink', 'href'))
-        else if (anchor.href != "#")
+        else if (anchor.href != location.origin + location.pathname + "#") {
             anchor.onclick = makeRedirect(anchor.href);
+        }
     }
-}   
+}
 
 function saveLocalData(data) {
     localStorage.setItem("data", JSON.stringify(data));
@@ -183,7 +222,7 @@ function loadLocalData() {
 
     buildFromData(data);
 
-    setAnchors();    
+    setAnchors();
 }
 
 function loadIndex() {
@@ -194,16 +233,41 @@ function localDataAvailable() {
     return localStorage.getItem("data") != null;
 }
 
+function setAuthLinks() {
+    var login = document.getElementById("login");
+    if (login == undefined) {
+        var logout = document.getElementById("logout");
+        logout.onclick = () => {
+            send("GET", "/logout", {}, () => {
+                logout.setAttribute("id", "login");
+                logout.innerText = "Login";
+                setAuthLinks();
+                resetContent();
+            }, onError);
+            return false;
+        }
+    } else {
+        login.onclick = () => {
+            popupLogin();
+            return false;
+        }
+    }
+}
+
+function resetContent() {
+    makeRedirect(location.hash)();
+}
+
 window.onload = function () {
     var search = document.getElementById("search_btn");
     search.onclick = displaySearchBox;
 
-    alert("Loaded");
+    setAuthLinks();
 
     if (localDataAvailable())
         loadLocalData();
-    else
-        loadIndex();
+
+    loadIndex();
 };
 
 /*

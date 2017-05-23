@@ -101,6 +101,7 @@ def context(request, data, more):
 
     kandydaci = get_candidates(stats)
 
+    stats.pop("obwody", None)
     return {
         "auth": True if request.user.is_authenticated else False,
         "stats": stats,
