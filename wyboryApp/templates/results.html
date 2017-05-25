@@ -6,7 +6,7 @@
                             <th>Imię i nazwisko</th>
                             <th>Liczba oddanych głosów</th>
                             <th>Wynik wyborczy (%)</th>
-              <!--  {% if auth %}<th>Edycja</th>{% endif %} -->
+                            <th style="visibility: collapse;">Edycja</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -23,6 +23,7 @@
                                     <span>{{ kandydat.procent }}%</span>
                                 </div>
                             </td>
+                            <td style="visibility: collapse;"></td>
                 <!--{% if auth %}{% if editId %}<td><a href="/edit/{{editId}}/{{kandydat.id}}?return={{currUrl}}">Edytuj</a></td>{% endif %}{% endif %} -->
                             
                         </tr>

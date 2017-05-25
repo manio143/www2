@@ -16,16 +16,13 @@ function send(method, uri, content, onSuccess, onError, setUp) {
     var req = new XMLHttpRequest();
     req.open(method, uri, true);
 
-    if(setUp != undefined)
+    if (setUp !== undefined)
         setUp(req);
     req.onreadystatechange = function () {
         if (req.readyState !== 4) return;
         if (req.status >= 200 && req.status < 300) {
-            alert(req.responseText);
+            //alert(req.responseText);
             onSuccess(req.status, req.responseText);
-            // var resp = JSON.parse(req.responseText);
-            // var csrftoken = cookies.csrftoken;
-            // div.innerHTML = "Imię: "+resp.imie+"<br>Nazwisko: <input type='text' id='pt' value='"+resp.nazwisko"'><input type='button' onlick='sendpost()'>";
         }
         else {
             onError(req.status, req.responseText);
@@ -40,11 +37,10 @@ function send(method, uri, content, onSuccess, onError, setUp) {
     return req;
 }
 
-
-function displaySearchBox() {
-    alert("search");
-
-    return false;
+function clearChildren(node) {
+    while (node.hasChildNodes()) {
+        node.removeChild(node.lastChild);
+    }
 }
 
 function setVisibility(id, visible) {
@@ -67,8 +63,10 @@ function setStats(stats) {
     frekwencja.innerHTML = stats.frekwencja;
 }
 
-function setResult(resultTable, result) {
+function setResult(resultTable, result, auth) {
     var body = resultTable.getElementsByTagName("tbody")[0];
+    if (auth)
+        resultTable.getElementsByTagName("th")[3].style.visibility = "visible";
     var rows = body.getElementsByTagName("tr");
     for (let index = 0; index < rows.length; index++) {
         rows[index].children[0].innerHTML = result[index].nazwa;
@@ -77,6 +75,10 @@ function setResult(resultTable, result) {
         var freq = rows[index].children[2].getElementsByTagName("span")[0];
         bar.style.width = result[index].procent + "%";
         freq.innerHTML = result[index].procent + "%";
+        if (auth) {
+            rows[index].children[3].style.visibility = "visible";
+            rows[index].children[3].innerHTML = "<a href=\"#\" onclick=\"return editScore.apply(this);\" data-id=\""+(index+1)+"\">Edytuj</a>";
+        }
     }
 }
 
@@ -85,23 +87,22 @@ function setMainResult(result) {
     setResult(mainResult, result);
 }
 
-function setResults(results) {
+function setResults(results, auth) {
     var mainResult = document.getElementById("mainResult");
     var resultsWrapper = document.getElementById("results-wrapper");
     for (let i = 0; i < results.length; i++) {
         var newResult = mainResult.cloneNode(true);
-        newResult.id = undefined;
+        newResult.removeAttribute("id");
         newResult.setAttribute("name", "results");
-        newResult.dataset.id = i;
-        setResult(newResult, results[i].result);
+        newResult.dataset.id = results[i].id;
+        setResult(newResult, results[i].result, auth);
         resultsWrapper.appendChild(newResult);
     }
 }
 
 function setMore(links) {
     var more = document.getElementById("more");
-    for (child of more.children)
-        more.removeChild(child);
+    clearChildren(more);
     for (let i = 0; i < links.length; i++) {
         let div = document.createElement('div');
         div.classList.add("col-3");
@@ -116,12 +117,16 @@ function setMore(links) {
 }
 
 function deleteResults() {
-    var results = document.getElementsByName("results");
-    if (results.length > 0) {
-        var parent = results[0].parentElement;
-        for (result of results)
-            parent.removeChild(result);
+    while (document.getElementsByName("results").length > 0) {
+        var resultsWrapper = document.getElementById("results-wrapper");
+        clearChildren(resultsWrapper);
     }
+    // var results = document.getElementsByName("results");
+    // if (results.length > 0) {
+    //     var parent = results[0].parentElement;
+    //     for (result of results)
+    //         parent.removeChild(result);
+    // }
 }
 
 function buildFromData(data) {
@@ -138,7 +143,7 @@ function buildFromData(data) {
         setVisibility("map", false);
         setVisibility("more-wrapper", false);
         setMainResult(data.mainResult);
-        setResults(data.more.results);
+        setResults(data.more.results, data.auth);
     }
 }
 
@@ -147,10 +152,16 @@ function onError(status, resp) {
 }
 
 function makeRedirect(href) {
+    href = href.replace(location.origin + location.pathname, "");
     return () => {
         function processResponse(status, response) {
-            var resp = JSON.parse(response);
-            var prevUri = location.hash;
+            var resp;
+            try {
+                resp = JSON.parse(response);
+            } catch (err) {
+                alert(err + "\n" + response);
+                throw err;
+            }
 
             location.hash = href;
 
@@ -163,48 +174,128 @@ function makeRedirect(href) {
             setAnchors();
         }
 
+        if(fromSearch) {
+            setVisibility("popup-wrapper", false); //hide searchbox
+            fromSearch = false;
+        }
         send("GET", href, {}, processResponse, onError);
 
         return false;
-    }
+    };
+}
+
+var fromSearch = false;
+
+function displaySearchBox() {
+    setVisibility("popup-wrapper", true);
+    setVisibility("popup-login", false);
+    setVisibility("popup-search", true);
+    setVisibility("popup-edit", false);
+
+    let form = document.getElementById("search-form");
+    form.onsubmit = form.submit = searchSubmit;
+
+    fromSearch = true;
+
+    return false;
+}
+
+function searchSubmit() {
+    let params = new FormData(this);
+    let q = params.get("q");
+    send("GET", "/search?q=" + q, {}, (s, _data) => {
+        let searchResults = document.getElementById("search-results");
+        clearChildren(searchResults);
+        let data = JSON.parse(_data);
+        for (var g of data.gminy) {
+            let a = document.createElement('a');
+            a.href = "/gmina/" + g.nazwa + "-" + g.id;
+            a.innerHTML = g.nazwa;
+            searchResults.appendChild(a);
+            searchResults.appendChild(document.createElement("br"));
+        }
+
+        setAnchors();
+    }, onError);
+
+    return false;
+}
+
+function editScore() {
+    let id = this.parentElement.parentElement.parentElement.parentElement.parentElement.dataset.id;
+    let candidateId = this.dataset.id;
+    
+    send("GET", "/edit/"+id+"/"+candidateId, {}, (status, view) => {
+        setUpEditForm(view, id, candidateId);
+    }, onError);
+    return false;
+}
+
+function setUpEditForm(view, id, candidateId) {
+    setVisibility("popup-wrapper", true);
+    setVisibility("popup-login", false);
+    setVisibility("popup-search", false);
+    setVisibility("popup-edit", true);
+
+    let popupEdit = document.getElementById("popup-edit");
+    popupEdit.innerHTML = view;
+
+    let form = document.getElementById("edit-form");
+    form.onsubmit = form.submit = () => {
+        var params = new FormData(form);
+        var csrf = parse_cookies().csrftoken;
+        send("POST", "/edit/"+id+"/"+candidateId, params, (status, response) => {
+            setUpEditForm(response, id, candidateId);
+            resetContent();
+        }, onError, (req) => {
+            req.setRequestHeader("X-CSRFToken", csrf);
+        });
+
+        return false;
+    };
 }
 
 function popupLogin() {
-    let req = send("GET", "/login", {}, (status, view) => {
-        setVisibility("popup-wrapper", true);
-        setVisibility("popup-login", true);
-        setVisibility("popup-search", false);
-
-        let popupLogin = document.getElementById("popup-login");
-        popupLogin.innerHTML = view;
-
-        let form = document.getElementById("form-login");
-        form.submit = (e) => {            
-            var params = new FormData(form)
-            var csrf = form.elements.csrfmiddlewaretoken.value;
-            send("POST", "/login", params, () => {
-                var login = document.getElementById("login");
-                login.setAttribute("id", "login");
-                login.innerText = "Logout";
-                setAuthLinks();
-                resetContent();
-            }, onError, (req) => {
-                req.setRequestHeader("Content-type", "application/json");
-                req.setRequestHeader("X-Csrf-Token", csrf);
-            });
-
-            return false;
-        }
-
-        return false;
+    send("GET", "/login", {}, (status, view) => {
+        setUpLoginForm(view);
     }, onError);
 }
+function setUpLoginForm(view) {
+    setVisibility("popup-wrapper", true);
+    setVisibility("popup-login", true);
+    setVisibility("popup-search", false);
+    setVisibility("popup-edit", false);
 
+    let popupLogin = document.getElementById("popup-login");
+    popupLogin.innerHTML = view;
+
+    let form = document.getElementById("form-login");
+    form.onsubmit = form.submit = () => {
+        var params = new FormData(form);
+        var csrf = parse_cookies().csrftoken;
+        send("POST", "/login", params, () => {
+            var login = document.getElementById("login");
+            login.setAttribute("id", "logout");
+            login.innerText = "Logout";
+            setVisibility("popup-wrapper", false);
+            setAuthLinks();
+            resetContent();
+        }, (status, response) => {
+            if (status == 420)
+                setUpLoginForm(response);
+            else onError(status, response);
+        }, (req) => {
+            req.setRequestHeader("X-CSRFToken", csrf);
+        });
+
+        return false;
+    };
+}
 function setAnchors() {
     var anchors = document.getElementsByTagName("a");
-    for (anchor of anchors) {
+    for (var anchor of anchors) {
         if (anchor.getAttributeNS('http://www.w3.org/1999/xlink', 'href'))
-            anchor.onclick = makeRedirect(anchor.getAttributeNS('http://www.w3.org/1999/xlink', 'href'))
+            anchor.onclick = makeRedirect(anchor.getAttributeNS('http://www.w3.org/1999/xlink', 'href'));
         else if (anchor.href != location.origin + location.pathname + "#") {
             anchor.onclick = makeRedirect(anchor.href);
         }
@@ -230,12 +321,12 @@ function loadIndex() {
 }
 
 function localDataAvailable() {
-    return localStorage.getItem("data") != null;
+    return localStorage.getItem("data") !== null;
 }
 
 function setAuthLinks() {
     var login = document.getElementById("login");
-    if (login == undefined) {
+    if (login === null) {
         var logout = document.getElementById("logout");
         logout.onclick = () => {
             send("GET", "/logout", {}, () => {
@@ -245,17 +336,21 @@ function setAuthLinks() {
                 resetContent();
             }, onError);
             return false;
-        }
+        };
     } else {
         login.onclick = () => {
             popupLogin();
             return false;
-        }
+        };
     }
 }
 
+function currentLocation() {
+    return location.hash.replace("#", "");
+}
+
 function resetContent() {
-    makeRedirect(location.hash)();
+    makeRedirect(currentLocation())();
 }
 
 window.onload = function () {
@@ -269,9 +364,3 @@ window.onload = function () {
 
     loadIndex();
 };
-
-/*
-    TODO: search, login, edit, link to index
-
-    known bugs: object stays after change (possibly can't remove 'this')
-*/

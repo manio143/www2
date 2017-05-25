@@ -14,7 +14,7 @@
 <body>
     <header class="center-text">
         <div class="shrinkwrap">
-            <h1>Wybory Prezydenta Rzeczypospolitej Polskiej 2000</h1>
+            <a href="/index"><h1>Wybory Prezydenta Rzeczypospolitej Polskiej 2000</h1></a>
         </div>
         <div>
             {% if auth == True %}
@@ -54,11 +54,20 @@
     </main>
     <div class="dimmer" id="popup-wrapper">
         <div class="popup" id="popup">
+            <a href="#" onclick="setVisibility('popup-wrapper', false); return false">[x] CLOSE</a>
             <div id="popup-login">
                 
             </div>
             <div id="popup-search">
-                
+                <form id="search-form" onsubmit="return searchSubmit()">
+                    <center><label>Szukaj</label></center><br/>
+                    <input type="text" name="q">
+                    <button type="submit">Szukaj</button>
+                </form>
+                <div id="search-results">
+                </div>
+            </div>
+            <div id="popup-edit">
             </div>
         </div>
     </div>

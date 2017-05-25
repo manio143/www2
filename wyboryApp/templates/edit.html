@@ -1,11 +1,7 @@
-<html>
-    <head><title>Edytuj</title></head>
-    <body>
         {% if error %}<p style="color: red;">{{error}}</p>{% endif %}
         {% if success %}<p style="color: green;">{{success}}</p>{% endif %}
         <p>Wynik kandydata {{nazwa}} w obwodzie nr {{obwod}}</p>       
-        <form action="{{currUrl}}?return={{back}}" method="post">
-            {% csrf_token %}
+        <form action="{{currUrl}}?return={{back}}" method="post" id="edit-form">
             {% for field in form %}
                 <div class="fieldWrapper">
                     {{ field.errors }}
@@ -18,5 +14,3 @@
             <input type="submit" value="Submit" />
             {% if back %}<a href="{{back}}"><input type="button" value="Back" /></a>{% endif %}
         </form>
-    </body>
-</html>

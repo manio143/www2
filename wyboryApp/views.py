@@ -7,6 +7,8 @@ from django.contrib.auth import authenticate, logout, login
 from django import forms
 from django.db import transaction, IntegrityError
 
+from django.middleware import csrf
+
 from . import models
 from .logic import get_stats, get_candidates, integrity_check
 
@@ -85,16 +87,18 @@ def user_login(request):
         form.is_valid()
         user = authenticate(username=form.cleaned_data["user"], password=form.cleaned_data["password"])
         if user is None:
-            return render(request, "login.html",
+            result = render(request, "login.html",
                           {"error": "Invalid login or password.", "form": LoginForm()})
+            result.status_code = 420
+            return result
         else:
             login(request, user)
-            return HttpResponseRedirect("/")
+            return JsonResponse({"auth":True})
 
 
 def user_logout(request):
     logout(request)
-    return HttpResponseRedirect("/")
+    return JsonResponse({"auth":False})
 
 def context(request, data, more):
     stats = get_stats(data)
@@ -173,18 +177,21 @@ def edit_view(request, obwod_id, candidate_id):
 
     if request.method == "POST":
         form = EditForm(request.POST)
-        form.is_valid() #TODO: if not set error and return
-        oddane = form.cleaned_data["oddane"]
-        try:
-            with transaction.atomic():
-                wynik.glosy = oddane
-                wynik.save()
-                integrity_check(wynik)
-                success = "Zaktualizowano dane."
-        except IntegrityError:
-            error = "Liczba głosów oddanych w obwodzie nie może przekraczać liczby wydanych kart."
+        if form.is_valid(): #TODO: if not set error and return
+            oddane = form.cleaned_data["oddane"]
+            try:
+                with transaction.atomic():
+                    wynik.glosy = oddane
+                    wynik.save()
+                    integrity_check(wynik)
+                    success = "Zaktualizowano dane."
+            except IntegrityError:
+                error = "Liczba głosów oddanych w obwodzie nie może przekraczać liczby wydanych kart."
+        else:
+            error = "Błąd w przesłanych danych"
     else:
         form = EditForm(initial={"oddane": wynik.glosy})
+        csrf.get_token(request)
 
     context = {
         "form": form,
@@ -211,4 +218,4 @@ def search(request):
         "gminy": [{"nazwa": x.nazwa, "id": x.id} for x in gminy]
     }
 
-    return render(request, "search.html", context)
+    return JsonResponse(good_to_go(context), safe=False)

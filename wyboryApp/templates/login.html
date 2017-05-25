@@ -1,6 +1,6 @@
         {% if error %}<p style="color: red;">{{error}}</p>{% endif %}
         <form action="/login" method="post" id="form-login">
-            {% csrf_token %}
+            
             {% for field in form %}
                 <div class="fieldWrapper">
                     {{ field.errors }}
