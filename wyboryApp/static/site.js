@@ -77,7 +77,7 @@ function setResult(resultTable, result, auth) {
         freq.innerHTML = result[index].procent + "%";
         if (auth) {
             rows[index].children[3].style.visibility = "visible";
-            rows[index].children[3].innerHTML = "<a href=\"#\" onclick=\"return editScore.apply(this);\" data-id=\""+(index+1)+"\">Edytuj</a>";
+            rows[index].children[3].innerHTML = "<a href=\"#\" onclick=\"return editScore.apply(this);\" data-id=\"" + (index + 1) + "\">Edytuj</a>";
         }
     }
 }
@@ -174,7 +174,7 @@ function makeRedirect(href) {
             setAnchors();
         }
 
-        if(fromSearch) {
+        if (fromSearch) {
             setVisibility("popup-wrapper", false); //hide searchbox
             fromSearch = false;
         }
@@ -221,53 +221,51 @@ function searchSubmit() {
     return false;
 }
 
+//TODO: set value, candidate name and obwod id in form
 function editScore() {
     let id = this.parentElement.parentElement.parentElement.parentElement.parentElement.dataset.id;
     let candidateId = this.dataset.id;
-    
-    send("GET", "/edit/"+id+"/"+candidateId, {}, (status, view) => {
-        setUpEditForm(view, id, candidateId);
-    }, onError);
-    return false;
-}
 
-function setUpEditForm(view, id, candidateId) {
     setVisibility("popup-wrapper", true);
     setVisibility("popup-login", false);
     setVisibility("popup-search", false);
     setVisibility("popup-edit", true);
 
-    let popupEdit = document.getElementById("popup-edit");
-    popupEdit.innerHTML = view;
+    let err = document.getElementById("login-form-err");
+    let suc = document.getElementById("login-form-succ");
+    err.innerHTML = "";
+    suc.innerHTML = "";
 
     let form = document.getElementById("edit-form");
     form.onsubmit = form.submit = () => {
         var params = new FormData(form);
         var csrf = parse_cookies().csrftoken;
-        send("POST", "/edit/"+id+"/"+candidateId, params, (status, response) => {
-            setUpEditForm(response, id, candidateId);
-            resetContent();
+        send("POST", "/edit/" + id + "/" + candidateId, params, (status, response) => {
+            let data = JSON.parse(response);
+            if (data.success !== null) {
+                suc.innerHTML = data.success;
+                resetContent();
+            } else {
+                err.innerHTML = data.error;
+            }
         }, onError, (req) => {
             req.setRequestHeader("X-CSRFToken", csrf);
         });
 
         return false;
     };
+
+    return false;
 }
 
 function popupLogin() {
-    send("GET", "/login", {}, (status, view) => {
-        setUpLoginForm(view);
-    }, onError);
-}
-function setUpLoginForm(view) {
     setVisibility("popup-wrapper", true);
     setVisibility("popup-login", true);
     setVisibility("popup-search", false);
     setVisibility("popup-edit", false);
 
-    let popupLogin = document.getElementById("popup-login");
-    popupLogin.innerHTML = view;
+    let err = document.getElementById("login-form-err");
+    err.innerHTML = "";
 
     let form = document.getElementById("form-login");
     form.onsubmit = form.submit = () => {
@@ -281,8 +279,10 @@ function setUpLoginForm(view) {
             setAuthLinks();
             resetContent();
         }, (status, response) => {
-            if (status == 420)
-                setUpLoginForm(response);
+            if (status == 420) {
+                err.innerHTML = response;
+                form.elements.password.value = "";
+            }
             else onError(status, response);
         }, (req) => {
             req.setRequestHeader("X-CSRFToken", csrf);

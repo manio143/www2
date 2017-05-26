@@ -14,14 +14,14 @@
 <body>
     <header class="center-text">
         <div class="shrinkwrap">
-            <a href="/index"><h1>Wybory Prezydenta Rzeczypospolitej Polskiej 2000</h1></a>
+            <a href="/index">
+                <h1>Wybory Prezydenta Rzeczypospolitej Polskiej 2000</h1>
+            </a>
         </div>
         <div>
             {% if auth == True %}
-                <a href="#" id="logout">Logout</a>
-            {% else %}
-                <a href="#" id="login">Login</a>
-            {% endif %}
+            <a href="#" id="logout">Logout</a> {% else %}
+            <a href="#" id="login">Login</a> {% endif %}
             <a href="#" id="search_btn">Search</a>
             <!--<form method="get" action="/search">
                 <input type="text" name="q">
@@ -33,9 +33,7 @@
     <main>
         {% block content %}
         <div class="flex-wrapper">
-            {% include 'map.html' %}
-            {% include 'statistics.html' %}
-            {% include 'results.html' %}
+            {% include 'map.html' %} {% include 'statistics.html' %} {% include 'results.html' %}
         </div>
 
         <div id="results-wrapper" class="flex-wrapper">
@@ -56,7 +54,17 @@
         <div class="popup" id="popup">
             <a href="#" onclick="setVisibility('popup-wrapper', false); return false">[x] CLOSE</a>
             <div id="popup-login">
-                
+                <p style="color: red;" id="login-form-err"></p>
+                <form action="/login" method="post" id="form-login">
+                    <div class="fieldWrapper">
+                        <label for="id_user">Login:</label> <input id="id_user" name="user" type="text" required>
+                    </div>
+                    <div class="fieldWrapper">
+                        <label for="id_password">Password:</label> <input id="id_password" name="password" type="password"
+                            required>
+                    </div>
+                    <input type="submit" value="Login" id="submit-login" />
+                </form>
             </div>
             <div id="popup-search">
                 <form id="search-form" onsubmit="return searchSubmit()">
@@ -68,10 +76,20 @@
                 </div>
             </div>
             <div id="popup-edit">
+                <p style="color: red;" id="edit-form-err"></p>
+                <p style="color: green;" id="edit-form-succ"></p>
+                <p>Wynik kandydata <span id="edit-form-name"></span> w obwodzie nr <span id="edit-form-id"></span></p>
+                <form id="edit-form">
+                    <div class="fieldWrapper">
+                        <label for="id_oddane">Oddane:</label> <input id="id_oddane" name="oddane" value="400" required=""
+                            type="number">
+                    </div>
+                    <input type="submit" value="Submit" />
+                </form>
             </div>
         </div>
     </div>
-    <script src="{% static "site.js" %}"></script>    
+    <script src="{% static "site.js" %}"></script>
 </body>
 
 </html>

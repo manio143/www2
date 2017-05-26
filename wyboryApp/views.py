@@ -87,8 +87,7 @@ def user_login(request):
         form.is_valid()
         user = authenticate(username=form.cleaned_data["user"], password=form.cleaned_data["password"])
         if user is None:
-            result = render(request, "login.html",
-                          {"error": "Invalid login or password.", "form": LoginForm()})
+            result = JsonResponse({"error": "Invalid login or password."})
             result.status_code = 420
             return result
         else:
@@ -164,7 +163,10 @@ def gmina(request, nazwa, id):
 
 class EditForm(forms.Form):
     oddane = forms.IntegerField()
-    #TODO: validate greater than 0
+    
+    def clean(self):
+        if self.cleaned_data.get("oddane") < 0:
+            self.add_error("oddane", "Ujemna wartość!")
 
 
 def edit_view(request, obwod_id, candidate_id):
@@ -177,7 +179,7 @@ def edit_view(request, obwod_id, candidate_id):
 
     if request.method == "POST":
         form = EditForm(request.POST)
-        if form.is_valid(): #TODO: if not set error and return
+        if form.is_valid():
             oddane = form.cleaned_data["oddane"]
             try:
                 with transaction.atomic():
@@ -194,17 +196,15 @@ def edit_view(request, obwod_id, candidate_id):
         csrf.get_token(request)
 
     context = {
-        "form": form,
         "nazwa": "{} {}".format(candidate.imie, candidate.nazwisko),
         "obwod": obwod_id,
-        "currUrl": request.path,
         "success": success,
         "error": error,
     }
     if "return" in request.GET:
         context["back"] = request.GET["return"]
 
-    return render(request, "edit.html", context)
+    return JsonResponse(good_to_go(context))
 
 
 def search(request):
