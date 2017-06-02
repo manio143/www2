@@ -37,6 +37,14 @@ function send(method, uri, content, onSuccess, onError, setUp) {
     return req;
 }
 
+function parseform(form) {
+    var formData = new FormData(form);
+    var obj = {};
+    for(var pair of formData.entries())
+        obj[pair[0]] = pair[1];
+    return JSON.stringify(obj);
+}
+
 function clearChildren(node) {
     while (node.hasChildNodes()) {
         node.removeChild(node.lastChild);
@@ -250,8 +258,8 @@ function editScore() {
     let scoreInput = document.getElementById("id_oddane");
     scoreInput.value = row.getElementsByClassName("data-glosy")[0].innerText;
     form.onsubmit = form.submit = () => {
+        var params = parseform(form);
         if (validate_edit(form.elements.oddane.value, id, candidateId)) {
-            var params = "{\"oddane\": " + form.elements.oddane.value + "}";
             var csrf = parse_cookies().csrftoken;
             send("POST", "/edit/" + id + "/" + candidateId, params, (status, response) => {
                 let data = JSON.parse(response);
@@ -287,7 +295,7 @@ function popupLogin() {
 
     let form = document.getElementById("form-login");
     form.onsubmit = form.submit = () => {
-        var params = "{\"user\": \"" + form.elements.user.value + "\", \"password\": \"" + form.elements.password.value + "\"}";
+        var params = parseform(form);
         var csrf = parse_cookies().csrftoken;
         send("POST", "/login", params, () => {
             var login = document.getElementById("login");
