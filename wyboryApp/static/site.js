@@ -223,7 +223,9 @@ function searchSubmit() {
 
 //TODO: set value, candidate name and obwod id in form
 function editScore() {
-    let id = this.parentElement.parentElement.parentElement.parentElement.parentElement.dataset.id;
+    let row = this.parentElement.parentElement;
+    let table  = row.parentElement.parentElement;
+    let id = table.parentElement.dataset.id;
     let candidateId = this.dataset.id;
 
     setVisibility("popup-wrapper", true);
@@ -231,17 +233,21 @@ function editScore() {
     setVisibility("popup-search", false);
     setVisibility("popup-edit", true);
 
-    let err = document.getElementById("login-form-err");
-    let suc = document.getElementById("login-form-succ");
+    let err = document.getElementById("edit-form-err");
+    let suc = document.getElementById("edit-form-succ");
     err.innerHTML = "";
     suc.innerHTML = "";
 
     let form = document.getElementById("edit-form");
+    let scoreInput = document.getElementById("id_oddane");
+    scoreInput.value = row.getElementsByClassName("data-glosy")[0].innerText;
     form.onsubmit = form.submit = () => {
         var params = new FormData(form);
         var csrf = parse_cookies().csrftoken;
         send("POST", "/edit/" + id + "/" + candidateId, params, (status, response) => {
             let data = JSON.parse(response);
+            err.innerHTML = "";
+            suc.innerHTML = "";
             if (data.success !== null) {
                 suc.innerHTML = data.success;
                 resetContent();
@@ -280,7 +286,7 @@ function popupLogin() {
             resetContent();
         }, (status, response) => {
             if (status == 420) {
-                err.innerHTML = response;
+                err.innerHTML = JSON.parse(response).error;
                 form.elements.password.value = "";
             }
             else onError(status, response);
