@@ -1,3 +1,5 @@
+from json import loads
+
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views import View
@@ -157,7 +159,9 @@ def gmina(request, nazwa, id):
     return json(request, data, "gmina",
                 {"results":
                  [{"id": x.id, "result": get_candidates(get_stats(data.filter(
-                     id=x.id))), "miejsce": "w obwodzie nr {}".format(x.id)} for x in data]
+                     id=x.id))), "max": get_stats(data.filter(
+                     id=x.id))["wydane"] - get_stats(data.filter(
+                     id=x.id))["niewazne"], "miejsce": "w obwodzie nr {}".format(x.id)} for x in data]
                 })
 
 
@@ -219,3 +223,12 @@ def search(request):
     }
 
     return JsonResponse(good_to_go(context), safe=False)
+
+def json_to_dict(get_response):
+    def middleware(request):
+        body_unicode = request.body.decode('utf-8')
+        if body_unicode.startswith("{"):
+            request.POST = loads(body_unicode)
+        response = get_response(request)
+        return response
+    return middleware

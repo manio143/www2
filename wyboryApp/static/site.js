@@ -130,6 +130,7 @@ function deleteResults() {
 }
 
 function buildFromData(data) {
+    currentData = data;
     setStats(data.stats);
     setMainResult(data.mainResult);
     if (data.type === "main") {
@@ -221,10 +222,17 @@ function searchSubmit() {
     return false;
 }
 
-//TODO: set value, candidate name and obwod id in form
+var currentData;
+
+function validate_edit(newVal, id, candidateId) {
+    var data = currentData.more.results.filter(x => x.id == id)[0];
+    var sum_oddane = data.result.map(x => x.glosy).reduce((acc, val) => acc + val, 0) - data.result[candidateId - 1].glosy + Number(newVal);
+    return sum_oddane <= data.max;
+}
+
 function editScore() {
     let row = this.parentElement.parentElement;
-    let table  = row.parentElement.parentElement;
+    let table = row.parentElement.parentElement;
     let id = table.parentElement.dataset.id;
     let candidateId = this.dataset.id;
 
@@ -242,22 +250,26 @@ function editScore() {
     let scoreInput = document.getElementById("id_oddane");
     scoreInput.value = row.getElementsByClassName("data-glosy")[0].innerText;
     form.onsubmit = form.submit = () => {
-        var params = new FormData(form);
-        var csrf = parse_cookies().csrftoken;
-        send("POST", "/edit/" + id + "/" + candidateId, params, (status, response) => {
-            let data = JSON.parse(response);
-            err.innerHTML = "";
+        if (validate_edit(form.elements.oddane.value, id, candidateId)) {
+            var params = "{\"oddane\": " + form.elements.oddane.value + "}";
+            var csrf = parse_cookies().csrftoken;
+            send("POST", "/edit/" + id + "/" + candidateId, params, (status, response) => {
+                let data = JSON.parse(response);
+                err.innerHTML = "";
+                suc.innerHTML = "";
+                if (data.success !== null) {
+                    suc.innerHTML = data.success;
+                    resetContent();
+                } else {
+                    err.innerHTML = data.error;
+                }
+            }, onError, (req) => {
+                req.setRequestHeader("X-CSRFToken", csrf);
+            });
+        } else {
             suc.innerHTML = "";
-            if (data.success !== null) {
-                suc.innerHTML = data.success;
-                resetContent();
-            } else {
-                err.innerHTML = data.error;
-            }
-        }, onError, (req) => {
-            req.setRequestHeader("X-CSRFToken", csrf);
-        });
-
+            err.innerHTML = "Liczba głosów oddanych w obwodzie nie może przekraczać liczby wydanych kart.";
+        }
         return false;
     };
 
@@ -275,7 +287,7 @@ function popupLogin() {
 
     let form = document.getElementById("form-login");
     form.onsubmit = form.submit = () => {
-        var params = new FormData(form);
+        var params = "{\"user\": \"" + form.elements.user.value + "\", \"password\": \"" + form.elements.password.value + "\"}";
         var csrf = parse_cookies().csrftoken;
         send("POST", "/login", params, () => {
             var login = document.getElementById("login");
