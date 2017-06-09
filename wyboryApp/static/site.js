@@ -92,6 +92,7 @@ function setResult(resultTable, result, auth) {
 
 function setMainResult(result) {
     var mainResult = document.getElementById("mainResult");
+    //TODO: make sure there's as many rows as candidates
     setResult(mainResult, result);
 }
 
@@ -151,7 +152,6 @@ function buildFromData(data) {
     } else if (data.type === "gmina") {
         setVisibility("map", false);
         setVisibility("more-wrapper", false);
-        setMainResult(data.mainResult);
         setResults(data.more.results, data.auth);
     }
 }
