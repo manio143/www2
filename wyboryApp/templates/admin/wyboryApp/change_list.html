@@ -1,0 +1,33 @@
+{% extends "admin/change_list.html" %}
+
+{% load i18n static %}
+
+{% block search %}
+{% if cl.search_fields %}
+<div id="toolbar"><form method="get">
+<div><!-- DIV needed for valid HTML -->
+{% if cl.model_admin.advanced_search %}
+<label for="okreg">Okręg <img src="{% static "admin/img/search.svg" %}" alt="Search" /></label>
+<input type="text" size="20" name="okreg" value="{{ cl.advanced_search.okreg }}" id="searchbar_okreg" autofocus />
+<label for="gmina">Gmina <img src="{% static "admin/img/search.svg" %}" alt="Search" /></label>
+<input type="text" size="20" name="gmina" value="{{ cl.advanced_search.gmina }}" id="searchbar_gmina" />
+<label for="obwod">Obwód <img src="{% static "admin/img/search.svg" %}" alt="Search" /></label>
+<input type="text" size="20" name="obwod" value="{{ cl.advanced_search.obwod }}" id="searchbar_obwod" />
+<input type="submit" value="{% trans 'Search' %}" />
+
+{% else %}
+    <label for="searchbar"><img src="{% static "admin/img/search.svg" %}" alt="Search" /></label>
+    <input type="text" size="40" name="{{ search_var }}" value="{{ cl.query }}" id="searchbar" autofocus />
+    <input type="submit" value="{% trans 'Search' %}" />
+    {% if show_result_count %}
+        <span class="small quiet">{% blocktrans count counter=cl.result_count %}{{ counter }} result{% plural %}{{ counter }} results{% endblocktrans %} (<a href="?{% if cl.is_popup %}_popup=1{% endif %}">{% if cl.show_full_result_count %}{% blocktrans with full_result_count=cl.full_result_count %}{{ full_result_count }} total{% endblocktrans %}{% else %}{% trans "Show all" %}{% endif %}</a>)</span>
+    {% endif %}
+    {% for pair in cl.params.items %}
+        {% if pair.0 != search_var %}<input type="hidden" name="{{ pair.0 }}" value="{{ pair.1 }}"/>{% endif %}
+    {% endfor %}
+    {% endif %}
+{% endif %}
+</div>
+</form></div>
+
+{% endblock %}

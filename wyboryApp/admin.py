@@ -29,12 +29,44 @@ class ObwodInline(admin.StackedInline):
 
 class ObwodAdmin(admin.ModelAdmin):
     inlines = [WynikInline, ]
+    search_fields = ["gmina__nazwa", "okreg__numer", "id"]
+    list_display = ["__str__", "gmina", "okreg"]
+    advanced_search = True
+
+    def get_search_results(self, request, queryset, search_term):
+        # queryset, use_distinct = super(ObwodAdmin, self).get_search_results(
+        #                                 request, queryset, search_term)
+        obwod = request.GET.get("obwod", "")
+        gmina = request.GET.get("gmina", "")
+        okreg = request.GET.get("okreg", "")
+        #TODO: why isn't GET containing stuff?
+        #TODO: query like"%param%"
+        #TODO: modify self.advanced_search
+        print("{}\n{}".format(gmina, okreg))
+        return queryset, False
     
 class WithObwodListAdmin(admin.ModelAdmin):
     inlines = [ObwodInline, ]
 
+class OkregAdmin(WithObwodListAdmin):
+    search_fields = ["gmina__nazwa", "numer", "obwod__id"]
+    list_display = ["__str__", "get_gminy"]
+    advanced_search = True
+
+    def get_gminy(self, obj):
+        return ", ".join([g.__str__() for g in obj.gminy.distinct()])
+
+class GminaAdmin(WithObwodListAdmin):
+    search_fields = ["nazwa", "okreg__numer", "obwod__id"]
+    list_display = ["__str__", "get_okregi"]
+    advanced_search = True
+    
+    def get_okregi(self, obj):
+        return ", ".join([o.__str__() for o in obj.okregi.distinct()])
+
 admin.site.register(Kandydat)
 
-admin.site.register([Okreg, Gmina], WithObwodListAdmin)
+admin.site.register(Okreg, OkregAdmin)
+admin.site.register(Gmina, GminaAdmin)
 
 admin.site.register(Obwod, ObwodAdmin)
