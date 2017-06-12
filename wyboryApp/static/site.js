@@ -76,7 +76,16 @@ function setResult(resultTable, result, auth) {
     if (auth)
         resultTable.getElementsByTagName("th")[3].style.visibility = "visible";
     var rows = body.getElementsByTagName("tr");
-    for (let index = 0; index < rows.length; index++) {
+    if(rows.length > result.length) {
+        for(let i = 0; i<rows.length - result.length; i++)
+            body.removeChild(body.lastChild);
+    }
+    rows = body.getElementsByTagName("tr");    
+    for (let index = 0; index < result.length; index++) {
+        if(rows.length <= index) {
+            body.appendChild(rows[index-1].cloneNode(true));
+            rows = body.getElementsByTagName("tr");
+        }
         rows[index].children[0].innerHTML = result[index].nazwa;
         rows[index].children[1].innerHTML = result[index].glosy;
         var bar = rows[index].children[2].getElementsByClassName("votebar")[0];
@@ -92,7 +101,6 @@ function setResult(resultTable, result, auth) {
 
 function setMainResult(result) {
     var mainResult = document.getElementById("mainResult");
-    //TODO: make sure there's as many rows as candidates
     setResult(mainResult, result);
 }
 

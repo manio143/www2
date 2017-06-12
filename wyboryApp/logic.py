@@ -39,7 +39,8 @@ def get_candidates(stats):
     def accumulate(wynik_set, id_list):
         out = 0
         while id_list:
-            out+=wynik_set.filter(obwod__id__in=id_list[:200]).aggregate(Sum('glosy'))["glosy__sum"]
+            elem = wynik_set.filter(obwod__id__in=id_list[:200]).aggregate(Sum('glosy'))["glosy__sum"]
+            out += elem if elem != None else 0
             id_list = id_list[200:]
         return out
 
