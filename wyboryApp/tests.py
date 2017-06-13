@@ -1,12 +1,15 @@
 from django.test import TestCase
 from django.db import IntegrityError
 from django.test import LiveServerTestCase
+from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.contrib.auth.models import User
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
+import time
 
 from .models import *
 from .logic import *
@@ -87,11 +90,45 @@ class LogicTestCase(TestCase):
         self.assertEqual(cand.id, candidates[0]["id"])
 
 
-class UITests(LiveServerTestCase):
+class wait_for_page_load(object):
+    def __init__(self, browser):
+        self.browser = browser
+
+    def __enter__(self):
+        self.old_page = self.browser.find_element_by_tag_name('html')
+
+    def page_has_loaded(self):
+        new_page = self.browser.find_element_by_tag_name('html')
+        return new_page.id != self.old_page.id
+
+    def wait_for(self, condition_function):
+        start_time = time.time()
+        while time.time() < start_time + 3:
+            if condition_function():
+                return True
+            else:
+                time.sleep(0.1)
+        raise Exception(
+            'Timeout waiting for {}'.format(condition_function.__name__)
+        )
+
+    def __exit__(self, *_):
+        self.wait_for(self.page_has_loaded)
+
+class wait_for_page_location_change(wait_for_page_load):
+    def __enter__(self):
+        self.old_hash = self.browser.execute_script("return window.location.hash")
+    def page_has_loaded(self):
+        new_hash = self.browser.execute_script("return window.location.hash")
+        return new_hash != self.old_hash
+
+
+class UITests(StaticLiveServerTestCase):
     def setUp(self):
         self.browser = webdriver.Chrome()
         self.browser.implicitly_wait(3)
         self.wait = WebDriverWait(self.browser, 10)
+        self.setUpDatabase()
 
     def tearDown(self):
         self.browser.quit()
@@ -102,7 +139,7 @@ class UITests(LiveServerTestCase):
         okreg = Okreg.objects.create(numer=1) #Okręg 1 w /woj/dolnośląskie
         
         gminaW = Gmina.objects.create(nazwa="Wrocław")
-        gminaL = Gmina.object.create(nazwa="Lubin")
+        gminaL = Gmina.objects.create(nazwa="Lubin")
 
         obwod1 = Obwod.objects.create(gmina=gminaW, okreg=okreg,
                                       uprawnieni=1000, wydane=800, niewazne=20)
@@ -120,13 +157,23 @@ class UITests(LiveServerTestCase):
     def open(self, url):
         self.browser.get("%s%s" % (self.live_server_url, url)) # use the live server url
 
+    
     def test_site_launches(self):
         self.open("")
         assert 'Wybory Prezydenta Rzeczypospolitej Polskiej 2000' in self.browser.title
+        #time.sleep(20)
 
-    def test_site_index_shows_proper_results(self):
-        self.open("")
-        #img_anchor = self.wait.until(EC.element_to_be_clickable(By.PARTIAL_LINK_TEXT, "/woj/dolnośląskie"))
-        self.wait.until(EC.text_to_be_present_in_element_value(By.XPATH, "//section[@id='mainResult']/table/tbody/tr/td[position()=2]"), "106")
+    # def test_site_index_shows_proper_results(self):
+    #     self.open("")
+    #     #img_anchor = self.wait.until(EC.element_to_be_clickable(By.PARTIAL_LINK_TEXT, "/woj/dolnośląskie"))
+    #     self.wait.until(EC.text_to_be_present_in_element_value(By.XPATH, "//section[@id='mainResult']/table/tbody/tr/td[position()=2]", "106"))
         
+    def test_site_goto_obwod(self):
+        self.open("")
+        with wait_for_page_location_change(self.browser):
+            self.browser.find_element_by_id("map_dolnośląskie").click()
+        with wait_for_page_location_change(self.browser):        
+            self.browser.find_element_by_link_text("Okręg Nr 1").click()
+        with wait_for_page_location_change(self.browser):
+            self.browser.find_element_by_link_text("Lubin").click()
         
