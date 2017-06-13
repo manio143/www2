@@ -1,7 +1,1 @@
-- [ ] Wyszukiwarka gmin i obwodów w adminie
-- [ ] Żeby w każdym modelu (na liście ogólnej) można było wyszukiwać po gminach/nr. obwódów itp.
 - [ ] testy
-
-READ
-https://github.com/django/django/blob/master/django/contrib/admin/views/main.py#L37
-https://stackoverflow.com/questions/28099848/is-there-a-way-to-search-for-multiple-terms-in-admin-search-django

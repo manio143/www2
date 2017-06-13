@@ -7,12 +7,12 @@
 <div id="toolbar"><form method="get">
 <div><!-- DIV needed for valid HTML -->
 {% if cl.model_admin.advanced_search %}
-<label for="okreg">Okręg <img src="{% static "admin/img/search.svg" %}" alt="Search" /></label>
-<input type="text" size="20" name="okreg" value="{{ cl.advanced_search.okreg }}" id="searchbar_okreg" autofocus />
-<label for="gmina">Gmina <img src="{% static "admin/img/search.svg" %}" alt="Search" /></label>
-<input type="text" size="20" name="gmina" value="{{ cl.advanced_search.gmina }}" id="searchbar_gmina" />
-<label for="obwod">Obwód <img src="{% static "admin/img/search.svg" %}" alt="Search" /></label>
-<input type="text" size="20" name="obwod" value="{{ cl.advanced_search.obwod }}" id="searchbar_obwod" />
+<label for="{{cl.model_admin.advanced_search.okreg}}">Okręg <img src="{% static "admin/img/search.svg" %}" alt="Search" /></label>
+<input type="text" size="20" name="{{cl.model_admin.advanced_search.okreg}}" value="{{ cl.model_admin.advanced_search.okreg_value }}" id="searchbar_okreg" autofocus />
+<label for="{{cl.model_admin.advanced_search.gmina}}">Gmina <img src="{% static "admin/img/search.svg" %}" alt="Search" /></label>
+<input type="text" size="20" name="{{cl.model_admin.advanced_search.gmina}}" value="{{ cl.model_admin.advanced_search.gmina_value }}" id="searchbar_gmina" />
+<label for="{{cl.model_admin.advanced_search.obwod}}">Obwód <img src="{% static "admin/img/search.svg" %}" alt="Search" /></label>
+<input type="text" size="20" name="{{cl.model_admin.advanced_search.obwod}}" value="{{ cl.model_admin.advanced_search.obwod_value }}" id="searchbar_obwod" />
 <input type="submit" value="{% trans 'Search' %}" />
 
 {% else %}
