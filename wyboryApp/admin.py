@@ -47,13 +47,11 @@ def get_custom_filter(params):
         def __init__(self, request, params, model, model_admin):
             self.title = "Advanced Search"
             super().__init__(request, params, model, model_admin)
-            print(params)
             for p in self.expected_parameters():
                 if p in params:
                     value = params.pop(p)
                     if value != None and value != '':
                         self.used_parameters[p] = prepare_lookup_value(p, value)
-            print(params)
 
         def has_output(self):
             return True
@@ -76,7 +74,6 @@ def get_custom_filter(params):
                 }
 
                 ret = queryset.filter(**query_params).distinct()
-                print(ret)
                 return ret
             except (ValueError, ValidationError) as e:
                 # Fields may raise a ValueError or ValidationError when converting
@@ -121,25 +118,28 @@ class ObwodAdmin(MyModelAdminBase):
     list_display = ["__str__", "gmina", "okreg"]
     list_filter = [get_custom_filter(["id", "gmina", "okreg"])]
     advanced_search = {"obwod": "id", "gmina":"gmina", "okreg":"okreg"}
+    ordering = ("id",)
 
 class OkregAdmin(MyModelAdminBase):
     inlines = [ObwodInline, ]
     search_fields = ["gmina__nazwa", "numer", "obwod__id"]
-    list_display = ["__str__", "get_gminy"]
+    list_display = ["__str__", "_gminy"]
     list_filter = [get_custom_filter(["numer", "gmina", "obwod"])]
     advanced_search = {"obwod": "obwod", "gmina":"gmina", "okreg":"numer"}
+    ordering = ("numer",)
 
-    def get_gminy(self, obj):
+    def _gminy(self, obj):
         return ", ".join([g.__str__() for g in obj.gminy.distinct()])
 
 class GminaAdmin(MyModelAdminBase):
     inlines = [ObwodInline, ]
     search_fields = ["nazwa", "okreg__numer", "obwod__id"]
-    list_display = ["__str__", "get_okregi"]
+    list_display = ["__str__", "_okregi"]
     list_filter = [get_custom_filter(["nazwa", "obwod", "okreg"])]
     advanced_search = {"obwod": "obwod", "gmina":"nazwa", "okreg":"okreg"}
+    ordering = ("nazwa",)
     
-    def get_okregi(self, obj):
+    def _okregi(self, obj):
         return ", ".join([o.__str__() for o in obj.okregi.distinct()])
 
 admin.site.register(Kandydat)
