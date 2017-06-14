@@ -83,6 +83,7 @@ class LoginForm(forms.Form):
 
 def user_login(request):
     if request.method == "GET":
+        csrf.get_token(request)        
         return render(request, "login.html", {"form": LoginForm()})
     elif request.method == "POST":
         form = LoginForm(request.POST)

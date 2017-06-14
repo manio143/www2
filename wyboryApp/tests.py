@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.db import IntegrityError
 from django.test import LiveServerTestCase
+from unittest import skip
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.contrib.auth.models import User
 
@@ -134,7 +135,8 @@ class UITests(StaticLiveServerTestCase):
         self.browser.quit()
 
     def setUpDatabase(self):
-        User.objects.create_superuser(username="admin", password="pwd", email="su@root.com")
+        User.objects.create_superuser(username="root", password="admin1234", email="su@root.com")
+        User.objects.create_user(username="admin", password="admin", email="test@test.com")
 
         okreg = Okreg.objects.create(numer=1) #Okręg 1 w /woj/dolnośląskie
         
@@ -163,17 +165,116 @@ class UITests(StaticLiveServerTestCase):
         assert 'Wybory Prezydenta Rzeczypospolitej Polskiej 2000' in self.browser.title
         #time.sleep(20)
 
-    # def test_site_index_shows_proper_results(self):
-    #     self.open("")
-    #     #img_anchor = self.wait.until(EC.element_to_be_clickable(By.PARTIAL_LINK_TEXT, "/woj/dolnośląskie"))
-    #     self.wait.until(EC.text_to_be_present_in_element_value(By.XPATH, "//section[@id='mainResult']/table/tbody/tr/td[position()=2]", "106"))
-        
     def test_site_goto_obwod(self):
         self.open("")
         with wait_for_page_location_change(self.browser):
             self.browser.find_element_by_id("map_dolnośląskie").click()
-        with wait_for_page_location_change(self.browser):        
+        with wait_for_page_location_change(self.browser):
             self.browser.find_element_by_link_text("Okręg Nr 1").click()
         with wait_for_page_location_change(self.browser):
             self.browser.find_element_by_link_text("Lubin").click()
-        
+
+    @skip("Weird CSRF problem")
+    def test_site_login_and_edit(self):
+        self.open("")
+        self.browser.find_element_by_id("login").click()
+        self.browser.find_element_by_id("id_user").clear()
+        self.browser.find_element_by_id("id_user").send_keys("admin")
+        self.browser.find_element_by_id("id_password").clear()
+        self.browser.find_element_by_id("id_password").send_keys("admin")
+        self.browser.find_element_by_id("submit-login").click()
+        with wait_for_page_location_change(self.browser):
+            self.browser.find_element_by_id("map_dolnośląskie").click()
+        with wait_for_page_location_change(self.browser):
+            self.browser.find_element_by_link_text("Okręg Nr 1").click()
+        with wait_for_page_location_change(self.browser):
+            self.browser.find_element_by_link_text("Lubin").click()
+        self.browser.find_element_by_xpath("(//a[contains(text(),'Edytuj')])[0]").click()
+        self.browser.find_element_by_id("id_oddane").clear()
+        self.browser.find_element_by_id("id_oddane").send_keys("1000")
+        self.browser.find_element_by_css_selector("#edit-form > input[type=\"submit\"]").click()
+        self.browser.find_element_by_css_selector("#edit-form-err")
+        self.browser.find_element_by_id("id_oddane").clear()
+        self.browser.find_element_by_id("id_oddane").send_keys("50")
+        self.browser.find_element_by_css_selector("#edit-form > input[type=\"submit\"]").click()
+        self.browser.find_element_by_css_selector("#edit-form-succ")        
+        self.browser.find_element_by_link_text("[x] CLOSE").click()
+
+    def login_admin(self):
+        with wait_for_page_load(self.browser):
+            self.open("/admin/")
+        user = self.browser.find_element_by_id("id_username")
+        user.clear()
+        user.send_keys("root")
+        pwd = self.browser.find_element_by_id("id_password")
+        pwd.clear()
+        pwd.send_keys("admin1234")
+        self.browser.find_element_by_css_selector("input[type=\"submit\"]").click()
+
+
+    def test_admin_models_present(self):
+        self.login_admin()
+        with wait_for_page_load(self.browser):
+            self.open("/admin/")
+        self.browser.find_element_by_link_text("Kandydaci")
+        self.browser.find_element_by_link_text("Okręgi")
+        self.browser.find_element_by_link_text("Gminy")
+        self.browser.find_element_by_link_text("Obwody")
+
+    def test_admin_edit_score_through_gmina(self):
+        self.login_admin()
+        with wait_for_page_load(self.browser):
+            self.open("/admin/")
+        with wait_for_page_load(self.browser):
+            self.browser.find_element_by_link_text("Gminy").click()
+        with wait_for_page_load(self.browser):
+            self.browser.find_element_by_link_text("Lubin").click()
+        with wait_for_page_load(self.browser):
+            self.browser.find_element_by_link_text("Change").click()
+
+        score_input = self.browser.find_element_by_id("id_wynik_set-0-glosy")
+        score_input.clear()
+        score_input.send_keys(70)
+        self.browser.find_element_by_name("_save").click()
+
+    def test_admin_edit_score_through_gmina_expect_error(self):
+        self.login_admin()
+        with wait_for_page_load(self.browser):
+            self.open("/admin/")
+        with wait_for_page_load(self.browser):
+            self.browser.find_element_by_link_text("Gminy").click()
+        with wait_for_page_load(self.browser):
+            self.browser.find_element_by_link_text("Lubin").click()
+        with wait_for_page_load(self.browser):
+            self.browser.find_element_by_link_text("Change").click()
+
+        score_input = self.browser.find_element_by_id("id_wynik_set-0-glosy")
+        score_input.clear()
+        score_input.send_keys(10000)
+        with wait_for_page_load(self.browser):
+            self.browser.find_element_by_name("_save").click()
+
+        self.browser.find_element_by_css_selector(".errornote")
+
+    def test_admin_search_by_various_properties(self):
+        self.login_admin()
+        with wait_for_page_load(self.browser):
+            self.open("/admin/")
+        with wait_for_page_load(self.browser):
+            self.browser.find_element_by_link_text("Obwody").click()
+
+        self.browser.find_element_by_id("searchbar_okreg").clear()
+        self.browser.find_element_by_id("searchbar_okreg").send_keys(1)
+        self.browser.find_element_by_css_selector("input[type=\"submit\"]").click()
+
+        self.browser.find_element_by_id("searchbar_okreg").clear()
+        self.browser.find_element_by_id("searchbar_gmina").clear()
+        self.browser.find_element_by_id("searchbar_gmina").send_keys("Lubin")
+        self.browser.find_element_by_css_selector("input[type=\"submit\"]").click()
+
+        self.browser.find_element_by_id("searchbar_gmina").clear()
+        self.browser.find_element_by_id("searchbar_obwod").clear()
+        self.browser.find_element_by_id("searchbar_obwod").send_keys("1")
+        self.browser.find_element_by_css_selector("input[type=\"submit\"]").click()
+
+        self.browser.find_element_by_link_text("All").click()
