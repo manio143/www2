@@ -16,9 +16,10 @@ class WynikAdminForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = self.cleaned_data
+        obwod = cleaned_data.get("obwod")
         wynik = cleaned_data.get("id")
         glosy = cleaned_data.get("glosy")
-        if integrity_check_for_forms(wynik, glosy):
+        if not integrity_check_for_forms(wynik, glosy, obwod):
             raise forms.ValidationError("Suma głosów nie może przekraczać wydanych kart.")
         return cleaned_data
 

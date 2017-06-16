@@ -50,3 +50,6 @@ class Wynik(models.Model):
     kandydat = models.ForeignKey("Kandydat")
     obwod = models.ForeignKey("Obwod")
     glosy = models.IntegerField()
+
+    class Meta:
+        unique_together = ("kandydat", "obwod")

@@ -126,6 +126,7 @@ def json(request, data, type, more=None):
     return JsonResponse(_context, safe=False)
 
 def main_page(request):
+    csrf.get_token(request) #so that a new user can submit login form
     return view(request, models.Obwod.objects.filter(id__lt=0), "index.html")
 
 def index(request):

@@ -174,7 +174,6 @@ class UITests(StaticLiveServerTestCase):
         with wait_for_page_location_change(self.browser):
             self.browser.find_element_by_link_text("Lubin").click()
 
-    @skip("Weird CSRF problem")
     def test_site_login_and_edit(self):
         self.open("")
         self.browser.find_element_by_id("login").click()
@@ -251,6 +250,47 @@ class UITests(StaticLiveServerTestCase):
         score_input = self.browser.find_element_by_id("id_wynik_set-0-glosy")
         score_input.clear()
         score_input.send_keys(10000)
+        with wait_for_page_load(self.browser):
+            self.browser.find_element_by_name("_save").click()
+
+        self.browser.find_element_by_css_selector(".errornote")
+
+    def test_admin_edit_score_to_negative_through_gmina_expect_error(self):
+        self.login_admin()
+        with wait_for_page_load(self.browser):
+            self.open("/admin/")
+        with wait_for_page_load(self.browser):
+            self.browser.find_element_by_link_text("Gminy").click()
+        with wait_for_page_load(self.browser):
+            self.browser.find_element_by_link_text("Lubin").click()
+        with wait_for_page_load(self.browser):
+            self.browser.find_element_by_link_text("Change").click()
+
+        score_input = self.browser.find_element_by_id("id_wynik_set-0-glosy")
+        score_input.clear()
+        score_input.send_keys("-1")
+        with wait_for_page_load(self.browser):
+            self.browser.find_element_by_name("_save").click()
+
+        self.browser.find_element_by_css_selector(".errornote")
+
+    def test_admin_add_candidate_the_second_time(self):
+        self.login_admin()
+        with wait_for_page_load(self.browser):
+            self.open("/admin/")
+        with wait_for_page_load(self.browser):
+            self.browser.find_element_by_link_text("Obwody").click()
+        with wait_for_page_load(self.browser):
+            self.browser.find_element_by_link_text("Obwód nr. 1").click()
+
+        candidate_input = self.browser.find_element_by_id("id_wynik_set-2-kandydat")
+        for option in candidate_input.find_elements_by_tag_name('option'):
+            if option.text == 'Jan Nowak':
+                option.click()
+                break
+        score_input = self.browser.find_element_by_id("id_wynik_set-2-glosy")
+        score_input.clear()
+        score_input.send_keys("0")
         with wait_for_page_load(self.browser):
             self.browser.find_element_by_name("_save").click()
 

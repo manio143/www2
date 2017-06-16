@@ -64,10 +64,11 @@ def integrity_check(wynik):
     if wazne + obwod.niewazne > obwod.wydane:
         raise IntegrityError("Suma głosów nie może przekraczać wydanych kart.")
 
-def integrity_check_for_forms(wynik, newVal):
+def integrity_check_for_forms(wynik, newVal, obwod):
+    newVal = newVal if newVal is not None else 0
     if newVal < 0:
-        return false
-    obwod = Obwod.objects.select_for_update().get(id=wynik.obwod.id)
+        return False
     wazne = Wynik.objects.filter(
         obwod__id=obwod.id).aggregate(Sum("glosy"))["glosy__sum"]
-    return (wazne - wynik.glosy + newVal) + obwod.niewazne > obwod.wydane
+    stare_glosy = wynik.glosy if wynik is not None else 0
+    return (wazne - stare_glosy + newVal) + obwod.niewazne <= obwod.wydane

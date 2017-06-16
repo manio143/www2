@@ -327,7 +327,8 @@ function popupLogin() {
 }
 function setAnchors() {
     var anchors = document.getElementsByTagName("a");
-    for (var anchor of anchors) {
+    for (var i=0; i<anchors.length; i++) {
+        var anchor = anchors[i];
         if (anchor.getAttributeNS('http://www.w3.org/1999/xlink', 'href'))
             anchor.onclick = makeRedirect(anchor.getAttributeNS('http://www.w3.org/1999/xlink', 'href'));
         else if (anchor.href != location.origin + location.pathname + "#") {
