@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django import forms
 
+from django.forms.models import BaseInlineFormSet
 from django.contrib.admin.utils import prepare_lookup_value
 from django.utils.translation import gettext_lazy
 from django.core.exceptions import  ValidationError
@@ -9,23 +10,39 @@ from django.contrib.admin.options import IncorrectLookupParameters
 from .models import *
 from .logic import integrity_check_for_forms
 
-class WynikAdminForm(forms.ModelForm):
+class WynikInlineFormSet(BaseInlineFormSet):
     class Meta:
         model = Wynik
         fields = ["kandydat", "glosy"]
 
     def clean(self):
-        cleaned_data = self.cleaned_data
-        obwod = cleaned_data.get("obwod")
-        wynik = cleaned_data.get("id")
-        glosy = cleaned_data.get("glosy")
-        if not integrity_check_for_forms(wynik, glosy, obwod):
+        super(WynikInlineFormSet, self).clean()
+        wsum = 0
+        obwod = None
+        for form in self.forms:
+            if not form.is_valid():
+                return #don't bother, cause other problem exists
+
+            if form.cleaned_data.get("DELETE") or not any(form.cleaned_data):
+                continue
+
+            cleaned_data = form.cleaned_data
+
+            if obwod is None:
+                obwod = cleaned_data.get("obwod")
+            glosy = cleaned_data.get("glosy")
+
+            if glosy < 0:
+                raise forms.ValidationError("Nie można dać ujemnych głosów.")
+
+            wsum += glosy
+
+        if not integrity_check_for_forms(glosy, obwod):
             raise forms.ValidationError("Suma głosów nie może przekraczać wydanych kart.")
-        return cleaned_data
 
 class WynikInline(admin.TabularInline):
     model = Wynik
-    form = WynikAdminForm
+    formset = WynikInlineFormSet
 
 class ObwodInline(admin.StackedInline):
     model = Obwod
