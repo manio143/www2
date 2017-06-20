@@ -37,7 +37,7 @@ class WynikInlineFormSet(BaseInlineFormSet):
 
             wsum += glosy
 
-        if not integrity_check_for_forms(glosy, obwod):
+        if not integrity_check_for_forms(wsum, obwod):
             raise forms.ValidationError("Suma głosów nie może przekraczać wydanych kart.")
 
 class WynikInline(admin.TabularInline):

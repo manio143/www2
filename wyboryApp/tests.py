@@ -6,6 +6,7 @@ from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.contrib.auth.models import User
 
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -126,7 +127,9 @@ class wait_for_page_location_change(wait_for_page_load):
 
 class UITests(StaticLiveServerTestCase):
     def setUp(self):
-        self.browser = webdriver.Chrome()
+        opts = Options()
+        opts.binary_location = "/usr/bin/chromium-browser"
+        self.browser = webdriver.Chrome(chrome_options=opts)
         self.browser.implicitly_wait(3)
         self.wait = WebDriverWait(self.browser, 10)
         self.setUpDatabase()
@@ -182,21 +185,29 @@ class UITests(StaticLiveServerTestCase):
         self.browser.find_element_by_id("id_password").clear()
         self.browser.find_element_by_id("id_password").send_keys("admin")
         self.browser.find_element_by_id("submit-login").click()
+        time.sleep(1)
         with wait_for_page_location_change(self.browser):
             self.browser.find_element_by_id("map_dolnośląskie").click()
         with wait_for_page_location_change(self.browser):
             self.browser.find_element_by_link_text("Okręg Nr 1").click()
         with wait_for_page_location_change(self.browser):
             self.browser.find_element_by_link_text("Lubin").click()
-        self.browser.find_element_by_xpath("(//a[contains(text(),'Edytuj')])[0]").click()
+        self.browser.find_element_by_link_text("Edytuj").click()
+        #too much
         self.browser.find_element_by_id("id_oddane").clear()
         self.browser.find_element_by_id("id_oddane").send_keys("1000")
         self.browser.find_element_by_css_selector("#edit-form > input[type=\"submit\"]").click()
         self.browser.find_element_by_css_selector("#edit-form-err")
+        #negative
+        self.browser.find_element_by_id("id_oddane").clear()
+        self.browser.find_element_by_id("id_oddane").send_keys("-1")
+        self.browser.find_element_by_css_selector("#edit-form > input[type=\"submit\"]").click()
+        self.browser.find_element_by_css_selector("#edit-form-err")
+        #good
         self.browser.find_element_by_id("id_oddane").clear()
         self.browser.find_element_by_id("id_oddane").send_keys("50")
         self.browser.find_element_by_css_selector("#edit-form > input[type=\"submit\"]").click()
-        self.browser.find_element_by_css_selector("#edit-form-succ")        
+        self.browser.find_element_by_css_selector("#edit-form-succ")
         self.browser.find_element_by_link_text("[x] CLOSE").click()
 
     def login_admin(self):
@@ -220,12 +231,21 @@ class UITests(StaticLiveServerTestCase):
         self.browser.find_element_by_link_text("Gminy")
         self.browser.find_element_by_link_text("Obwody")
 
-    def test_admin_edit_score_through_gmina(self):
+    def admin_go_to(self, target):
         self.login_admin()
         with wait_for_page_load(self.browser):
             self.open("/admin/")
         with wait_for_page_load(self.browser):
-            self.browser.find_element_by_link_text("Gminy").click()
+            self.browser.find_element_by_link_text(target).click()
+
+    def admin_go_to_gminy(self):
+        self.admin_go_to("Gminy")
+
+    def admin_go_to_obwody(self):
+        self.admin_go_to("Obwody")
+
+    def test_admin_edit_score_through_gmina(self):
+        self.admin_go_to_gminy()
         with wait_for_page_load(self.browser):
             self.browser.find_element_by_link_text("Lubin").click()
         with wait_for_page_load(self.browser):
@@ -237,11 +257,7 @@ class UITests(StaticLiveServerTestCase):
         self.browser.find_element_by_name("_save").click()
 
     def test_admin_edit_score_through_gmina_expect_error(self):
-        self.login_admin()
-        with wait_for_page_load(self.browser):
-            self.open("/admin/")
-        with wait_for_page_load(self.browser):
-            self.browser.find_element_by_link_text("Gminy").click()
+        self.admin_go_to_gminy()
         with wait_for_page_load(self.browser):
             self.browser.find_element_by_link_text("Lubin").click()
         with wait_for_page_load(self.browser):
@@ -256,11 +272,7 @@ class UITests(StaticLiveServerTestCase):
         self.browser.find_element_by_css_selector(".errornote")
 
     def test_admin_edit_score_to_negative_through_gmina_expect_error(self):
-        self.login_admin()
-        with wait_for_page_load(self.browser):
-            self.open("/admin/")
-        with wait_for_page_load(self.browser):
-            self.browser.find_element_by_link_text("Gminy").click()
+        self.admin_go_to_gminy()
         with wait_for_page_load(self.browser):
             self.browser.find_element_by_link_text("Lubin").click()
         with wait_for_page_load(self.browser):
@@ -275,11 +287,7 @@ class UITests(StaticLiveServerTestCase):
         self.browser.find_element_by_css_selector(".errornote")
 
     def test_admin_add_candidate_the_second_time(self):
-        self.login_admin()
-        with wait_for_page_load(self.browser):
-            self.open("/admin/")
-        with wait_for_page_load(self.browser):
-            self.browser.find_element_by_link_text("Obwody").click()
+        self.admin_go_to_obwody()
         with wait_for_page_load(self.browser):
             self.browser.find_element_by_link_text("Obwód nr. 1").click()
 
@@ -297,11 +305,7 @@ class UITests(StaticLiveServerTestCase):
         self.browser.find_element_by_css_selector(".errornote")
 
     def test_admin_search_by_various_properties(self):
-        self.login_admin()
-        with wait_for_page_load(self.browser):
-            self.open("/admin/")
-        with wait_for_page_load(self.browser):
-            self.browser.find_element_by_link_text("Obwody").click()
+        self.admin_go_to_gminy()
 
         self.browser.find_element_by_id("searchbar_okreg").clear()
         self.browser.find_element_by_id("searchbar_okreg").send_keys(1)
