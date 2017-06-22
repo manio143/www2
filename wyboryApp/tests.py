@@ -177,6 +177,11 @@ class UITests(StaticLiveServerTestCase):
         with wait_for_page_location_change(self.browser):
             self.browser.find_element_by_link_text("Lubin").click()
 
+    def test_site_check_value(self):
+        self.open("")
+        cell = self.browser.find_element_by_id("mainResult").find_element_by_tag_name("tbody").find_element_by_tag_name("tr").find_elements_by_tag_name("td")[1]
+        self.assertEqual(cell.text, "106")
+
     def test_site_login_and_edit(self):
         self.open("")
         self.browser.find_element_by_id("login").click()
